@@ -229,12 +229,17 @@
   // ── Data Collection via postMessage ────────────────────────────────
   window.addEventListener('message', (event) => {
     if (event.source !== window) return;
-    if (event.data?.type !== XFE.MSG_USERS_CAPTURED) return;
 
-    const users = event.data.users || [];
+    if (event.data?.type === XFE.MSG_USERS_CAPTURED) {
+      handleUsersCaptured(event.data.users || []);
+    } else if (event.data?.type === XFE.MSG_TWEETS_CAPTURED) {
+      handleTweetsCaptured(event.data.tweets || []);
+    }
+  });
+
+  function handleUsersCaptured(users) {
     let newCount = 0;
     for (const user of users) {
-      // Always key on screenName for consistent dedup
       const key = user.screenName;
       if (!key) continue;
       const existing = collectedUsers.get(key);
@@ -242,7 +247,6 @@
         collectedUsers.set(key, user);
         newCount++;
       } else {
-        // Merge: prefer non-empty values from the new data (API data is richer)
         for (const [k, v] of Object.entries(user)) {
           if (v !== '' && v !== undefined && v !== null && (existing[k] === '' || existing[k] === undefined)) {
             existing[k] = v;
@@ -257,10 +261,37 @@
         stopAutoScroll('Limit reached');
       }
     }
-  });
+  }
+
+  function handleTweetsCaptured(tweets) {
+    let newCount = 0;
+    for (const tweet of tweets) {
+      const key = tweet.tweetId;
+      if (!key) continue;
+      if (!collectedTweets.has(key)) {
+        collectedTweets.set(key, tweet);
+        newCount++;
+      }
+    }
+    if (newCount > 0) {
+      updateBadge();
+      updateBadgeExtension();
+      if (isScrolling && loadLimit > 0 && collectedTweets.size >= loadLimit) {
+        stopAutoScroll('Limit reached');
+      }
+    }
+  }
 
   // ── DOM Scraping Fallback ──────────────────────────────────────────
   function scrapeVisibleCells() {
+    if (isSearchMode()) {
+      scrapeVisibleTweets();
+    } else {
+      scrapeVisibleUsers();
+    }
+  }
+
+  function scrapeVisibleUsers() {
     const cells = document.querySelectorAll(XFE.SEL_USER_CELL);
     let newCount = 0;
     cells.forEach((cell) => {
@@ -346,6 +377,72 @@
       updateBadge();
       updateBadgeExtension();
       if (isScrolling && loadLimit > 0 && collectedUsers.size >= loadLimit) {
+        stopAutoScroll('Limit reached');
+      }
+    }
+  }
+
+  function scrapeVisibleTweets() {
+    const tweetCells = document.querySelectorAll(XFE.SEL_TWEET_CELL);
+    let newCount = 0;
+    tweetCells.forEach((cell) => {
+      try {
+        // Find the tweet link to extract id and author
+        let tweetId = '';
+        let authorHandle = '';
+        const timeLink = cell.querySelector('a[href*="/status/"] time')?.closest('a');
+        if (timeLink) {
+          const href = timeLink.getAttribute('href') || '';
+          const match = href.match(/\/([^/]+)\/status\/(\d+)/);
+          if (match) {
+            authorHandle = match[1];
+            tweetId = match[2];
+          }
+        }
+        if (!tweetId || collectedTweets.has(tweetId)) return;
+
+        // Extract author name
+        let authorName = '';
+        const userNameEl = cell.querySelector('[data-testid="User-Name"]');
+        if (userNameEl) {
+          const nameSpan = userNameEl.querySelector('a[role="link"] span span');
+          if (nameSpan) authorName = nameSpan.textContent.trim();
+        }
+
+        // Extract tweet text
+        let text = '';
+        const tweetText = cell.querySelector('[data-testid="tweetText"]');
+        if (tweetText) text = tweetText.textContent.trim();
+
+        // Extract time
+        let createdAt = '';
+        const timeEl = cell.querySelector('time');
+        if (timeEl) createdAt = timeEl.getAttribute('datetime') || '';
+
+        collectedTweets.set(tweetId, {
+          tweetId,
+          authorName: authorName || authorHandle,
+          authorHandle,
+          text,
+          createdAt,
+          likeCount: '',
+          retweetCount: '',
+          replyCount: '',
+          quoteCount: '',
+          viewCount: '',
+          tweetUrl: authorHandle
+            ? `https://x.com/${authorHandle}/status/${tweetId}`
+            : '',
+        });
+        newCount++;
+      } catch (e) {
+        // Skip malformed tweet cells
+      }
+    });
+    if (newCount > 0) {
+      updateBadge();
+      updateBadgeExtension();
+      if (isScrolling && loadLimit > 0 && collectedTweets.size >= loadLimit) {
         stopAutoScroll('Limit reached');
       }
     }
