@@ -122,7 +122,7 @@
         <svg class="xfe-search-icon" viewBox="0 0 24 24">
           <path d="M10.25 3.75a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13zm-8.5 6.5a8.5 8.5 0 1 1 15.176 5.262l4.531 4.53-1.414 1.415-4.531-4.531A8.5 8.5 0 0 1 1.75 10.25z"/>
         </svg>
-        <input class="xfe-search-input" type="text" placeholder="Search ${currentPageType}..." />
+        <input class="xfe-search-input" type="text" placeholder="Search..." />
         <span class="xfe-badge">0</span>
       </div>
       <div class="xfe-load-group">
@@ -306,10 +306,7 @@
 
     let visibleMatches = 0;
     cells.forEach((cell) => {
-      let text = cell.textContent.toLowerCase();
-      if (cell.querySelector('[data-testid="icon-verified"]')) {
-        text += ' verified';
-      }
+      const text = cell.textContent.toLowerCase();
       if (!q || text.includes(q)) {
         cell.style.display = '';
         visibleMatches++;
@@ -322,8 +319,7 @@
     if (q) {
       let totalMatches = 0;
       for (const [, user] of collectedUsers) {
-        const verified = user.verified ? ' verified' : '';
-        const searchable = `${user.name} ${user.screenName} ${user.description}${verified}`.toLowerCase();
+        const searchable = `${user.name} ${user.screenName} ${user.description}`.toLowerCase();
         if (searchable.includes(q)) totalMatches++;
       }
       const offscreen = totalMatches - visibleMatches;
