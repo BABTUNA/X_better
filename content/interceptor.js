@@ -188,6 +188,30 @@
     };
   }
 
+  /**
+   * Recursively search for tweet-like objects in case the response shape changes.
+   */
+  function findTweetsRecursive(obj, tweets, seen, depth) {
+    if (!obj || typeof obj !== 'object' || (depth || 0) > 12) return;
+
+    // Detect a tweet-like object: has rest_id and legacy.full_text
+    if (obj.rest_id && (obj.legacy?.full_text || obj.note_tweet)) {
+      const tweet = parseTweetResult(obj, seen);
+      if (tweet) tweets.push(tweet);
+      return;
+    }
+
+    if (Array.isArray(obj)) {
+      for (const item of obj) {
+        findTweetsRecursive(item, tweets, seen, (depth || 0) + 1);
+      }
+    } else {
+      for (const key of Object.keys(obj)) {
+        findTweetsRecursive(obj[key], tweets, seen, (depth || 0) + 1);
+      }
+    }
+  }
+
   function postUsers(users) {
     if (users.length > 0) {
       window.postMessage(
