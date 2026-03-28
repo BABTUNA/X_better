@@ -75,6 +75,20 @@
   color: var(--xfe-text-secondary);
 }
 
+/* Search wrap badge-only variant (no text input, used on search pages) */
+.xfe-search-wrap--badge-only {
+  max-width: none;
+  flex: 0 0 auto;
+  gap: 6px;
+}
+
+.xfe-badge-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--xfe-text);
+  white-space: nowrap;
+}
+
 /* Badge */
 .xfe-badge {
   background: var(--xfe-accent);
