@@ -155,30 +155,52 @@
     toolbar.className = 'xfe-toolbar';
     toolbar.setAttribute('data-xfe-theme', detectTheme());
 
-    toolbar.innerHTML = `
-      <div class="xfe-search-wrap">
-        <svg class="xfe-search-icon" viewBox="0 0 24 24">
-          <path d="M10.25 3.75a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13zm-8.5 6.5a8.5 8.5 0 1 1 15.176 5.262l4.531 4.53-1.414 1.415-4.531-4.531A8.5 8.5 0 0 1 1.75 10.25z"/>
-        </svg>
-        <input class="xfe-search-input" type="text" placeholder="Search..." />
-        <span class="xfe-badge">0</span>
-      </div>
-      <div class="xfe-load-group">
-        <span class="xfe-load-label">Max:</span>
-        <input class="xfe-load-input" type="number" min="1" placeholder="e.g. 500" title="Max users to load (leave empty for all)" />
-        <button class="xfe-btn xfe-btn--primary xfe-btn-load">Load All</button>
-      </div>
-      <button class="xfe-btn xfe-btn-csv">Export CSV</button>
-      <button class="xfe-btn xfe-btn-json">Export JSON</button>
-      <span class="xfe-offscreen-info"></span>
-      <div class="xfe-status"></div>
-    `;
+    if (isSearchMode()) {
+      toolbar.innerHTML = `
+        <div class="xfe-search-wrap xfe-search-wrap--badge-only">
+          <svg class="xfe-search-icon" viewBox="0 0 24 24">
+            <path d="M10.25 3.75a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13zm-8.5 6.5a8.5 8.5 0 1 1 15.176 5.262l4.531 4.53-1.414 1.415-4.531-4.531A8.5 8.5 0 0 1 1.75 10.25z"/>
+          </svg>
+          <span class="xfe-badge-label">Tweets:</span>
+          <span class="xfe-badge">0</span>
+        </div>
+        <div class="xfe-load-group">
+          <span class="xfe-load-label">Max:</span>
+          <input class="xfe-load-input" type="number" min="1" placeholder="e.g. 500" title="Max tweets to load (leave empty for all)" />
+          <button class="xfe-btn xfe-btn--primary xfe-btn-load">Load All</button>
+        </div>
+        <button class="xfe-btn xfe-btn-csv">Export CSV</button>
+        <button class="xfe-btn xfe-btn-json">Export JSON</button>
+        <div class="xfe-status"></div>
+      `;
+    } else {
+      toolbar.innerHTML = `
+        <div class="xfe-search-wrap">
+          <svg class="xfe-search-icon" viewBox="0 0 24 24">
+            <path d="M10.25 3.75a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13zm-8.5 6.5a8.5 8.5 0 1 1 15.176 5.262l4.531 4.53-1.414 1.415-4.531-4.531A8.5 8.5 0 0 1 1.75 10.25z"/>
+          </svg>
+          <input class="xfe-search-input" type="text" placeholder="Search..." />
+          <span class="xfe-badge">0</span>
+        </div>
+        <div class="xfe-load-group">
+          <span class="xfe-load-label">Max:</span>
+          <input class="xfe-load-input" type="number" min="1" placeholder="e.g. 500" title="Max users to load (leave empty for all)" />
+          <button class="xfe-btn xfe-btn--primary xfe-btn-load">Load All</button>
+        </div>
+        <button class="xfe-btn xfe-btn-csv">Export CSV</button>
+        <button class="xfe-btn xfe-btn-json">Export JSON</button>
+        <span class="xfe-offscreen-info"></span>
+        <div class="xfe-status"></div>
+      `;
+    }
 
     region.parentElement.insertBefore(toolbar, region);
 
-    // Event listeners
-    const input = toolbar.querySelector('.xfe-search-input');
-    input.addEventListener('input', () => onSearch(input.value));
+    // Event listeners (search input only on follower pages)
+    if (!isSearchMode()) {
+      const input = toolbar.querySelector('.xfe-search-input');
+      input.addEventListener('input', () => onSearch(input.value));
+    }
 
     const loadInput = toolbar.querySelector('.xfe-load-input');
     loadInput.addEventListener('input', () => {
