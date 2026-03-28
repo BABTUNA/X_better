@@ -5,7 +5,7 @@
 (function () {
   'use strict';
 
-  const GQL_FOLLOWERS = /\/graphql\/[^/]+\/Followers/;
+  const GQL_FOLLOWERS = /\/graphql\/[^/]+\/(Followers|BlueVerifiedFollowers)/;
   const GQL_FOLLOWING = /\/graphql\/[^/]+\/Following/;
   const MSG_USERS_CAPTURED = 'xfe_users_captured';
 

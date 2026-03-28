@@ -21,7 +21,7 @@
   // ── URL Detection ──────────────────────────────────────────────────
   function parsePageInfo(url) {
     const match = url.match(
-      /^https:\/\/(x|twitter)\.com\/([^/]+)\/(followers|following)\/?$/
+      /^https:\/\/(x|twitter)\.com\/([^/]+)\/(followers|following|verified_followers)\/?$/
     );
     if (!match) return null;
     return { user: match[2], type: match[3] };
@@ -306,7 +306,10 @@
 
     let visibleMatches = 0;
     cells.forEach((cell) => {
-      const text = cell.textContent.toLowerCase();
+      let text = cell.textContent.toLowerCase();
+      if (cell.querySelector('[data-testid="icon-verified"]')) {
+        text += ' verified';
+      }
       if (!q || text.includes(q)) {
         cell.style.display = '';
         visibleMatches++;
@@ -319,7 +322,8 @@
     if (q) {
       let totalMatches = 0;
       for (const [, user] of collectedUsers) {
-        const searchable = `${user.name} ${user.screenName} ${user.description}`.toLowerCase();
+        const verified = user.verified ? ' verified' : '';
+        const searchable = `${user.name} ${user.screenName} ${user.description}${verified}`.toLowerCase();
         if (searchable.includes(q)) totalMatches++;
       }
       const offscreen = totalMatches - visibleMatches;

@@ -18,7 +18,7 @@ chrome.runtime.onMessage.addListener((message, sender) => {
 chrome.tabs.onUpdated.addListener((tabId, changeInfo) => {
   if (changeInfo.url) {
     const isFollowerPage =
-      /\/(followers|following)\/?$/.test(changeInfo.url);
+      /\/(followers|following|verified_followers)\/?$/.test(changeInfo.url);
     if (!isFollowerPage) {
       chrome.action.setBadgeText({ text: '', tabId });
     }
