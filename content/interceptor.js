@@ -7,7 +7,9 @@
 
   const GQL_FOLLOWERS = /\/graphql\/[^/]+\/(Followers|BlueVerifiedFollowers)/;
   const GQL_FOLLOWING = /\/graphql\/[^/]+\/Following/;
+  const GQL_SEARCH = /\/graphql\/[^/]+\/SearchTimeline/;
   const MSG_USERS_CAPTURED = 'xfe_users_captured';
+  const MSG_TWEETS_CAPTURED = 'xfe_tweets_captured';
 
   /**
    * Extract user objects from GraphQL response.
@@ -118,6 +120,10 @@
 
   function isFollowerEndpoint(url) {
     return GQL_FOLLOWERS.test(url) || GQL_FOLLOWING.test(url);
+  }
+
+  function isSearchEndpoint(url) {
+    return GQL_SEARCH.test(url);
   }
 
   // --- Patch window.fetch ---
