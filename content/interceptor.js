@@ -221,6 +221,15 @@
     }
   }
 
+  function postTweets(tweets) {
+    if (tweets.length > 0) {
+      window.postMessage(
+        { type: MSG_TWEETS_CAPTURED, tweets: tweets },
+        '*'
+      );
+    }
+  }
+
   function isFollowerEndpoint(url) {
     return GQL_FOLLOWERS.test(url) || GQL_FOLLOWING.test(url);
   }
@@ -235,7 +244,10 @@
     const request = args[0];
     const url = typeof request === 'string' ? request : request?.url || '';
 
-    if (!isFollowerEndpoint(url)) {
+    const isFollower = isFollowerEndpoint(url);
+    const isSearch = isSearchEndpoint(url);
+
+    if (!isFollower && !isSearch) {
       return originalFetch.apply(this, args);
     }
 
@@ -243,8 +255,11 @@
       try {
         const clone = response.clone();
         const json = await clone.json();
-        const users = extractUsers(json);
-        postUsers(users);
+        if (isFollower) {
+          postUsers(extractUsers(json));
+        } else {
+          postTweets(extractTweets(json));
+        }
       } catch (e) {
         // Ignore parse failures
       }
@@ -262,12 +277,17 @@
   };
 
   XMLHttpRequest.prototype.send = function (...args) {
-    if (this._xfeUrl && isFollowerEndpoint(this._xfeUrl)) {
+    const xhrUrl = this._xfeUrl;
+    if (xhrUrl && (isFollowerEndpoint(xhrUrl) || isSearchEndpoint(xhrUrl))) {
+      const isSearch = isSearchEndpoint(xhrUrl);
       this.addEventListener('load', function () {
         try {
           const json = JSON.parse(this.responseText);
-          const users = extractUsers(json);
-          postUsers(users);
+          if (isSearch) {
+            postTweets(extractTweets(json));
+          } else {
+            postUsers(extractUsers(json));
+          }
         } catch (e) {
           // Ignore
         }
