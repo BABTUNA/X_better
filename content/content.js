@@ -6,10 +6,12 @@
   'use strict';
 
   // ── State ──────────────────────────────────────────────────────────
-  let collectedUsers = new Map(); // id -> user object
+  let collectedUsers = new Map(); // screenName -> user object
+  let collectedTweets = new Map(); // tweetId -> tweet object
   let currentUrl = '';
   let currentPageUser = '';
-  let currentPageType = ''; // 'followers' | 'following'
+  let currentPageType = ''; // 'followers' | 'following' | 'search'
+  let currentSearchQuery = '';
   let toolbar = null;
   let urlPollTimer = null;
   let scrollTimer = null;
@@ -18,13 +20,36 @@
   let staleCount = 0;
   let loadLimit = 0; // 0 = unlimited
 
+  function isSearchMode() {
+    return currentPageType === 'search';
+  }
+
+  function getCollectedCount() {
+    return isSearchMode() ? collectedTweets.size : collectedUsers.size;
+  }
+
   // ── URL Detection ──────────────────────────────────────────────────
   function parsePageInfo(url) {
-    const match = url.match(
+    // Check follower/following pages first
+    const followerMatch = url.match(
       /^https:\/\/(x|twitter)\.com\/([^/]+)\/(followers|following|verified_followers)\/?$/
     );
-    if (!match) return null;
-    return { user: match[2], type: match[3] };
+    if (followerMatch) {
+      return { user: followerMatch[2], type: followerMatch[3] };
+    }
+
+    // Check search pages
+    if (XFE.URL_SEARCH.test(url)) {
+      try {
+        const u = new URL(url);
+        const query = u.searchParams.get('q') || '';
+        return { type: 'search', query };
+      } catch (e) {
+        return null;
+      }
+    }
+
+    return null;
   }
 
   function startUrlPolling() {
@@ -40,19 +65,32 @@
 
   function onNavigate() {
     const info = parsePageInfo(location.href);
-    if (info) {
-      // Reset if user or page type changed
+    if (!info) {
+      cleanup();
+      currentPageUser = '';
+      currentPageType = '';
+      currentSearchQuery = '';
+      return;
+    }
+
+    if (info.type === 'search') {
+      if (currentPageType !== 'search' || currentSearchQuery !== info.query) {
+        cleanup();
+        currentPageType = 'search';
+        currentSearchQuery = info.query;
+        currentPageUser = '';
+        collectedTweets = new Map();
+        waitForContainer();
+      }
+    } else {
       if (info.user !== currentPageUser || info.type !== currentPageType) {
         cleanup();
         currentPageUser = info.user;
         currentPageType = info.type;
+        currentSearchQuery = '';
         collectedUsers = new Map();
         waitForContainer();
       }
-    } else {
-      cleanup();
-      currentPageUser = '';
-      currentPageType = '';
     }
   }
 
