@@ -157,10 +157,7 @@
 
     if (isSearchMode()) {
       toolbar.innerHTML = `
-        <div class="xfe-search-wrap xfe-search-wrap--badge-only">
-          <svg class="xfe-search-icon" viewBox="0 0 24 24">
-            <path d="M10.25 3.75a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13zm-8.5 6.5a8.5 8.5 0 1 1 15.176 5.262l4.531 4.53-1.414 1.415-4.531-4.531A8.5 8.5 0 0 1 1.75 10.25z"/>
-          </svg>
+        <div class="xfe-tweet-count">
           <span class="xfe-badge-label">Tweets:</span>
           <span class="xfe-badge">0</span>
         </div>

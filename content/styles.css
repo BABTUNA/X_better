@@ -75,10 +75,10 @@
   color: var(--xfe-text-secondary);
 }
 
-/* Search wrap badge-only variant (no text input, used on search pages) */
-.xfe-search-wrap--badge-only {
-  max-width: none;
-  flex: 0 0 auto;
+/* Tweet count indicator (search pages) */
+.xfe-tweet-count {
+  display: flex;
+  align-items: center;
   gap: 6px;
 }
 
