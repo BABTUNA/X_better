@@ -505,11 +505,11 @@
   function startAutoScroll() {
     isScrolling = true;
     staleCount = 0;
-    let lastCount = collectedUsers.size;
+    let lastCount = getCollectedCount();
 
     const btn = toolbar?.querySelector('.xfe-btn-load');
     if (btn) {
-      btn.textContent = `Loading... (${collectedUsers.size})`;
+      btn.textContent = `Loading... (${lastCount})`;
       btn.classList.add('xfe-btn--primary');
     }
 
@@ -518,7 +518,7 @@
       window.scrollBy({ top: window.innerHeight * 2, behavior: 'smooth' });
       scrapeVisibleCells();
 
-      const currentCount = collectedUsers.size;
+      const currentCount = getCollectedCount();
       if (currentCount === lastCount) {
         staleCount++;
       } else {
@@ -572,14 +572,14 @@
   // ── Badge Updates ──────────────────────────────────────────────────
   function updateBadge() {
     const badge = toolbar?.querySelector('.xfe-badge');
-    if (badge) badge.textContent = collectedUsers.size;
+    if (badge) badge.textContent = getCollectedCount();
   }
 
   function updateBadgeExtension() {
     try {
       chrome.runtime?.sendMessage({
         type: 'xfe_update_badge',
-        count: collectedUsers.size,
+        count: getCollectedCount(),
       });
     } catch (e) {
       // Extension context may be invalidated
@@ -588,6 +588,14 @@
 
   // ── Export ─────────────────────────────────────────────────────────
   function exportData(format) {
+    if (isSearchMode()) {
+      exportTweetData(format);
+    } else {
+      exportUserData(format);
+    }
+  }
+
+  function exportUserData(format) {
     if (collectedUsers.size === 0) return;
 
     const users = Array.from(collectedUsers.values());
@@ -595,9 +603,26 @@
     const filename = `${currentPageUser}_${currentPageType}_${date}`;
 
     if (format === 'csv') {
-      downloadCsv(users, filename);
+      downloadUserCsv(users, filename);
     } else {
-      downloadJson(users, filename);
+      downloadUserJson(users, filename);
+    }
+  }
+
+  function exportTweetData(format) {
+    if (collectedTweets.size === 0) return;
+
+    const tweets = Array.from(collectedTweets.values());
+    const date = new Date().toISOString().split('T')[0];
+    const safeQuery = (currentSearchQuery || 'search')
+      .replace(/[^a-zA-Z0-9_-]/g, '_')
+      .substring(0, 50);
+    const filename = `search_${safeQuery}_${date}`;
+
+    if (format === 'csv') {
+      downloadTweetCsv(tweets, filename);
+    } else {
+      downloadTweetJson(tweets, filename);
     }
   }
 
@@ -612,7 +637,15 @@
     }
   }
 
-  function downloadCsv(users, filename) {
+  function escapeCsv(val) {
+    const str = String(val ?? '');
+    if (str.includes('"') || str.includes(',') || str.includes('\n')) {
+      return '"' + str.replace(/"/g, '""') + '"';
+    }
+    return str;
+  }
+
+  function downloadUserCsv(users, filename) {
     const headers = [
       'name',
       'screen_name',
@@ -623,14 +656,6 @@
       'profile_image_url',
       'created_at',
     ];
-
-    const escapeCsv = (val) => {
-      const str = String(val ?? '');
-      if (str.includes('"') || str.includes(',') || str.includes('\n')) {
-        return '"' + str.replace(/"/g, '""') + '"';
-      }
-      return str;
-    };
 
     const rows = [headers.join(',')];
     for (const u of users) {
@@ -653,10 +678,64 @@
     download(rows.join('\n'), `${filename}.csv`, 'text/csv');
   }
 
-  function downloadJson(users, filename) {
+  function downloadTweetCsv(tweets, filename) {
+    const headers = [
+      'author_name',
+      'author_handle',
+      'text',
+      'date',
+      'likes',
+      'retweets',
+      'replies',
+      'quotes',
+      'views',
+      'tweet_url',
+    ];
+
+    const rows = [headers.join(',')];
+    for (const t of tweets) {
+      rows.push(
+        [
+          t.authorName,
+          t.authorHandle,
+          t.text,
+          formatDate(t.createdAt),
+          t.likeCount,
+          t.retweetCount,
+          t.replyCount,
+          t.quoteCount,
+          t.viewCount,
+          t.tweetUrl,
+        ]
+          .map(escapeCsv)
+          .join(',')
+      );
+    }
+
+    download(rows.join('\n'), `${filename}.csv`, 'text/csv');
+  }
+
+  function downloadUserJson(users, filename) {
     const cleaned = users.map(({ id, ...rest }) => ({
       ...rest,
       createdAt: formatDate(rest.createdAt),
+    }));
+    const json = JSON.stringify(cleaned, null, 2);
+    download(json, `${filename}.json`, 'application/json');
+  }
+
+  function downloadTweetJson(tweets, filename) {
+    const cleaned = tweets.map((t) => ({
+      authorName: t.authorName,
+      authorHandle: t.authorHandle,
+      text: t.text,
+      date: formatDate(t.createdAt),
+      likes: t.likeCount,
+      retweets: t.retweetCount,
+      replies: t.replyCount,
+      quotes: t.quoteCount,
+      views: t.viewCount,
+      tweetUrl: t.tweetUrl,
     }));
     const json = JSON.stringify(cleaned, null, 2);
     download(json, `${filename}.json`, 'application/json');
