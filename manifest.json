@@ -1,0 +1,33 @@
+{
+  "manifest_version": 3,
+  "name": "X Followers Search & Export",
+  "version": "1.0.0",
+  "description": "Search, filter, and export followers/following on X (Twitter)",
+  "permissions": ["storage"],
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://x.com/*", "https://twitter.com/*"],
+      "js": ["content/interceptor.js"],
+      "world": "MAIN",
+      "run_at": "document_start"
+    },
+    {
+      "matches": ["https://x.com/*", "https://twitter.com/*"],
+      "js": ["lib/constants.js", "content/content.js"],
+      "css": ["content/styles.css"],
+      "world": "ISOLATED",
+      "run_at": "document_idle"
+    }
+  ],
+  "action": {
+    "default_title": "X Followers Search & Export"
+  },
+  "background": {
+    "service_worker": "background/service-worker.js"
+  }
+}
