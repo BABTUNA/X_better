@@ -109,6 +109,85 @@
     }
   }
 
+  /**
+   * Extract tweet objects from SearchTimeline GraphQL response.
+   */
+  function extractTweets(json) {
+    const tweets = [];
+    const seen = new Set();
+    try {
+      const instructions =
+        json?.data?.search_by_raw_query?.search_timeline?.timeline?.instructions || [];
+
+      for (const instruction of instructions) {
+        const entries = instruction.entries || [];
+        for (const entry of entries) {
+          try {
+            const itemContent = entry?.content?.itemContent;
+            if (!itemContent) continue;
+            const tweetResult = itemContent.tweet_results?.result;
+            if (!tweetResult) continue;
+            const tweet = parseTweetResult(tweetResult, seen);
+            if (tweet) tweets.push(tweet);
+          } catch (e) {
+            // Skip individual entry parse errors
+          }
+        }
+      }
+    } catch (e) {
+      // Silently fail on top-level parse errors
+    }
+
+    // Recursive fallback if standard path found nothing
+    if (tweets.length === 0) {
+      findTweetsRecursive(json, tweets, seen);
+    }
+
+    return tweets;
+  }
+
+  function parseTweetResult(result, seen) {
+    // Handle tweet with tombstone or unavailable
+    if (result.__typename === 'TweetTombstone') return null;
+    // Handle TweetWithVisibilityResults wrapper
+    if (result.tweet) result = result.tweet;
+
+    const tweetId = result.rest_id;
+    if (!tweetId || seen.has(tweetId)) return null;
+    seen.add(tweetId);
+
+    const legacy = result.legacy || {};
+    const core = result.core?.user_results?.result || {};
+    const coreLegacy = core.legacy || {};
+    const coreCore = core.core || {};
+
+    const authorHandle =
+      coreCore.screen_name || coreLegacy.screen_name || core.screen_name || '';
+    const authorName =
+      coreCore.name || coreLegacy.name || core.name || '';
+
+    // Long tweets use note_tweet
+    const noteTweetText =
+      result.note_tweet?.note_tweet_results?.result?.text || '';
+    const text = noteTweetText || legacy.full_text || '';
+
+    return {
+      tweetId,
+      authorName,
+      authorHandle,
+      text,
+      createdAt: legacy.created_at || '',
+      likeCount: legacy.favorite_count ?? 0,
+      retweetCount: legacy.retweet_count ?? 0,
+      replyCount: legacy.reply_count ?? 0,
+      quoteCount: legacy.quote_count ?? 0,
+      viewCount: result.views?.count ?? '',
+      tweetUrl: authorHandle
+        ? `https://x.com/${authorHandle}/status/${tweetId}`
+        : '',
+    };
+  }
+
   function postUsers(users) {
     if (users.length > 0) {
       window.postMessage(
