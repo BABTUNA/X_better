@@ -305,24 +305,6 @@
         }
         if (!screenName) return;
 
-        // If user already exists (e.g. from API interceptor), merge DOM data in
-        if (collectedUsers.has(screenName)) {
-          const existing = collectedUsers.get(screenName);
-          if (name && (!existing.name || existing.name === existing.screenName)) {
-            existing.name = name;
-          }
-          if (description && !existing.description) {
-            existing.description = description;
-          }
-          if (profileImageUrl && !existing.profileImageUrl) {
-            existing.profileImageUrl = profileImageUrl;
-          }
-          if (verified && !existing.verified) {
-            existing.verified = verified;
-          }
-          return;
-        }
-
         // Extract display name: first dir="ltr" span inside the first profile link
         let name = '';
         const firstProfileLink = cell.querySelector(`a[href="/${screenName}"][role="link"]`);
@@ -354,6 +336,24 @@
 
         // Check for verified badge
         const verified = !!cell.querySelector('[data-testid="icon-verified"]');
+
+        // If user already exists (e.g. from API interceptor), merge DOM data in
+        if (collectedUsers.has(screenName)) {
+          const existing = collectedUsers.get(screenName);
+          if (name && (!existing.name || existing.name === existing.screenName)) {
+            existing.name = name;
+          }
+          if (description && !existing.description) {
+            existing.description = description;
+          }
+          if (profileImageUrl && !existing.profileImageUrl) {
+            existing.profileImageUrl = profileImageUrl;
+          }
+          if (verified && !existing.verified) {
+            existing.verified = verified;
+          }
+          return;
+        }
 
         collectedUsers.set(screenName, {
           name: name || screenName,
@@ -511,8 +511,8 @@
     }
 
     scrollTimer = setInterval(() => {
-      // Smooth scroll instead of jumping to bottom
-      window.scrollBy({ top: window.innerHeight * 2, behavior: 'smooth' });
+      // Scroll to the bottom to reliably trigger X's infinite scroll loader
+      window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'instant' });
       scrapeVisibleCells();
 
       const currentCount = getCollectedCount();

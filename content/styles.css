@@ -46,6 +46,7 @@
   padding: 0 12px;
   border: 1px solid transparent;
   transition: border-color 0.2s, background 0.2s;
+  overflow: hidden;
 }
 
 .xfe-search-wrap:focus-within {
@@ -62,6 +63,7 @@
 
 .xfe-search-input {
   flex: 1;
+  min-width: 0;
   border: none;
   outline: none;
   background: transparent;
@@ -69,6 +71,7 @@
   font-size: 14px;
   padding: 8px;
   font-family: inherit;
+  text-overflow: ellipsis;
 }
 
 .xfe-search-input::placeholder {
