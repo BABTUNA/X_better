@@ -13,8 +13,6 @@
    * Extract user objects from GraphQL response.
    * Tries multiple known response shapes to be resilient to API changes.
    */
-  let _debugLogged = false;
-
   function extractUsers(json) {
     const users = [];
     try {
@@ -28,15 +26,6 @@
             const userResult =
               entry?.content?.itemContent?.user_results?.result;
             if (!userResult) continue;
-
-            // Debug: log first userResult structure once
-            if (!_debugLogged) {
-              _debugLogged = true;
-              console.log('[XFE DEBUG] First userResult keys:', Object.keys(userResult));
-              console.log('[XFE DEBUG] First userResult:', JSON.stringify(userResult, null, 2).slice(0, 3000));
-              if (userResult.legacy) console.log('[XFE DEBUG] legacy keys:', Object.keys(userResult.legacy));
-              if (userResult.core) console.log('[XFE DEBUG] core keys:', Object.keys(userResult.core));
-            }
 
             const legacy = userResult.legacy || {};
             const core = userResult.core || {};

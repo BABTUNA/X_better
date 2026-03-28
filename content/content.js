@@ -172,9 +172,6 @@
     if (event.data?.type !== XFE.MSG_USERS_CAPTURED) return;
 
     const users = event.data.users || [];
-    if (users.length > 0) {
-      console.log('[XFE DEBUG] Received', users.length, 'users via postMessage. First user:', JSON.stringify(users[0]));
-    }
     let newCount = 0;
     for (const user of users) {
       // Always key on screenName for consistent dedup
@@ -437,7 +434,6 @@
     if (collectedUsers.size === 0) return;
 
     const users = Array.from(collectedUsers.values());
-    console.log('[XFE DEBUG] Exporting', users.length, 'users. First 3:', JSON.stringify(users.slice(0, 3)));
     const date = new Date().toISOString().split('T')[0];
     const filename = `${currentPageUser}_${currentPageType}_${date}`;
 
