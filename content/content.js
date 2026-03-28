@@ -499,10 +499,49 @@
     }
   }
 
+  function showOverlay() {
+    if (document.querySelector('.xfe-overlay')) return;
+    const overlay = document.createElement('div');
+    overlay.className = 'xfe-overlay';
+    overlay.innerHTML = `
+      <div class="xfe-overlay-content">
+        <div class="xfe-spinner"></div>
+        <div class="xfe-overlay-text">Loading...</div>
+        <div class="xfe-overlay-count">0 collected</div>
+        <button class="xfe-overlay-stop">Stop</button>
+      </div>
+    `;
+    overlay.querySelector('.xfe-overlay-stop').addEventListener('click', () => stopAutoScroll('Stopped'));
+    document.body.appendChild(overlay);
+    // Trigger reflow for transition
+    overlay.offsetHeight;
+    overlay.classList.add('xfe-overlay--visible');
+  }
+
+  function hideOverlay() {
+    const overlay = document.querySelector('.xfe-overlay');
+    if (!overlay) return;
+    overlay.classList.remove('xfe-overlay--visible');
+    overlay.addEventListener('transitionend', () => overlay.remove(), { once: true });
+    // Fallback removal if transition doesn't fire
+    setTimeout(() => overlay.remove(), 400);
+  }
+
+  function updateOverlayCount(count) {
+    const el = document.querySelector('.xfe-overlay-count');
+    if (el) {
+      const label = isSearchMode() ? 'tweets' : 'users';
+      el.textContent = `${count} ${label} collected`;
+    }
+  }
+
   function startAutoScroll() {
     isScrolling = true;
     staleCount = 0;
     let lastCount = getCollectedCount();
+
+    showOverlay();
+    updateOverlayCount(lastCount);
 
     const btn = toolbar?.querySelector('.xfe-btn-load');
     if (btn) {
@@ -524,6 +563,7 @@
       }
 
       if (btn) btn.textContent = `Loading... (${currentCount})`;
+      updateOverlayCount(currentCount);
 
       // Stop if limit reached
       if (loadLimit > 0 && currentCount >= loadLimit) {
@@ -543,6 +583,7 @@
 
   function stopAutoScroll(reason) {
     isScrolling = false;
+    hideOverlay();
     if (scrollTimer) {
       clearInterval(scrollTimer);
       scrollTimer = null;
