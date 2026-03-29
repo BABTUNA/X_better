@@ -636,7 +636,10 @@
   function exportUserData(format) {
     if (collectedUsers.size === 0) return;
 
-    const users = Array.from(collectedUsers.values());
+    let users = Array.from(collectedUsers.values());
+    if (loadLimit > 0 && users.length > loadLimit) {
+      users = users.slice(0, loadLimit);
+    }
     const date = new Date().toISOString().split('T')[0];
     const filename = `${currentPageUser}_${currentPageType}_${date}`;
 
@@ -650,7 +653,10 @@
   function exportTweetData(format) {
     if (collectedTweets.size === 0) return;
 
-    const tweets = Array.from(collectedTweets.values());
+    let tweets = Array.from(collectedTweets.values());
+    if (loadLimit > 0 && tweets.length > loadLimit) {
+      tweets = tweets.slice(0, loadLimit);
+    }
     const date = new Date().toISOString().split('T')[0];
     const safeQuery = (currentSearchQuery || 'search')
       .replace(/[^a-zA-Z0-9_-]/g, '_')

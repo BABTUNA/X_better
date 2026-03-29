@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "X Followers Search & Export",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Search, filter, and export followers/following on X (Twitter)",
   "permissions": ["storage"],
   "icons": {
